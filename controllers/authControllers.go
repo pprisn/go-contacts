@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"net/http"
-	u "github.com/pprisn/go-contact/utils"
-	"github.com/pprisn/go-contact/models"
+	u "github.com/pprisn/go-contacts/utils"
+	"github.com/pprisn/go-contacts/models"
 	"encoding/json"
 )
 
