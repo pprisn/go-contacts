@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"os"
 	"golang.org/x/crypto/bcrypt"
+        "time"
 )
 
 /*
@@ -97,8 +98,18 @@ func Login(email, password string) (map[string]interface{}) {
 	//Worked! Logged In
 	account.Password = ""
 
+
+
 	//Create JWT token
-	tk := &Token{UserId: account.ID}
+//	tk := &Token{UserId: account.ID}
+        //Добавим временное ограничение действия токена
+	tk := &Token{
+              UserId: account.ID, 
+              StandardClaims: jwt.StandardClaims{
+                  ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer:  "test",
+           },
+        }
+
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString //Store the token in the response

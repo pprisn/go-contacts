@@ -50,7 +50,6 @@ func (contact *Contact) Create() (map[string] interface{}) {
 }
 
 func GetContact(id uint) (*Contact) {
-
 	contact := &Contact{}
 	err := GetDB().Table("contacts").Where("id = ?", id).First(contact).Error
 	if err != nil {
@@ -59,8 +58,8 @@ func GetContact(id uint) (*Contact) {
 	return contact
 }
 
-func GetContacts(user uint) ([]*Contact) {
 
+func GetContacts(user uint) ([]*Contact) {
 	contacts := make([]*Contact, 0)
 	err := GetDB().Table("contacts").Where("user_id = ?", user).Find(&contacts).Error
 	if err != nil {
