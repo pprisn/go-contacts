@@ -72,8 +72,15 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		fmt.Sprintf("User %", tk.UserId) //Useful for monitoring
+
+                //WithValue returns a copy of parent in which the value associated with key is val.
+                // Запишем в структуру родительского контекста значение "user", tk.UserId
 		ctx := context.WithValue(r.Context(), "user", tk.UserId)
+                //Преобразуем даанные контекста ctx в структуру *Request 
 		r = r.WithContext(ctx)
+                // Применим новые значение r *Request в цепочке обработок пользовательского запроса
+                // подменим данные *http.Request на новое значение r, в составе которого имеется добавленное ассоциативные значение "user : 1"
+                // и вернем указатель обработки пользовательского запроса на следующий уровень.
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
 	});
 }
