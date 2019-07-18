@@ -11,18 +11,18 @@ import (
 
 func main() {
 
-	//Определим объект маршрутов
+	//РћРїСЂРµРґРµР»РёРј РѕР±СЉРµРєС‚ РјР°СЂС€СЂСѓС‚РѕРІ
 	router := mux.NewRouter()
-        //Определим обработчики маршрутов
+        //РћРїСЂРµРґРµР»РёРј РѕР±СЂР°Р±РѕС‚С‡РёРєРё РјР°СЂС€СЂСѓС‚РѕРІ
 	router.HandleFunc("/api/user/new", controllers.CreateAccount).Methods("POST")
 	router.HandleFunc("/api/user/login", controllers.Authenticate).Methods("POST")
 	router.HandleFunc("/api/contacts/new", controllers.CreateContact).Methods("POST")
 	router.HandleFunc("/api/me/contacts", controllers.GetContactsFor).Methods("GET") //  user/2/contacts
 
-        //Добавим требование запуска проверки middleware для объектов обработки маршрутов !
+        //Р”РѕР±Р°РІРёРј С‚СЂРµР±РѕРІР°РЅРёРµ Р·Р°РїСѓСЃРєР° РїСЂРѕРІРµСЂРєРё middleware РґР»СЏ РѕР±СЉРµРєС‚РѕРІ РѕР±СЂР°Р±РѕС‚РєРё РјР°СЂС€СЂСѓС‚РѕРІ !
 	router.Use(app.JwtAuthentication) //attach JWT auth middleware
 
-        //Заглушка для не существующего маршрута !
+        //Р—Р°РіР»СѓС€РєР° РґР»СЏ РЅРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РјР°СЂС€СЂСѓС‚Р° !
 	//router.NotFoundHandler = app.NotFoundHandler
 
 	port := os.Getenv("PORT")
@@ -36,4 +36,5 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
+
 }
