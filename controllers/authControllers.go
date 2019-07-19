@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"net/http"
-	u "github.com/pprisn/go-contacts/utils"
-	"github.com/pprisn/go-contacts/models"
 	"encoding/json"
+	"net/http"
+
+	"github.com/pprisn/go-contacts/models"
+	u "github.com/pprisn/go-contacts/utils"
 )
 
 var CreateAccount = func(w http.ResponseWriter, r *http.Request) {
@@ -33,3 +34,10 @@ var Authenticate = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
+var GetUsers = func(w http.ResponseWriter, r *http.Request) {
+	data := models.GetUsers()
+	resp := u.Message(true, "success")
+	resp["data"] = data
+	u.Respond(w, resp)
+
+}

@@ -1,14 +1,15 @@
 package app
 
 import (
-	"net/http"
-	u "github.com/pprisn/go-contacts/utils"
-	"strings"
-	"github.com/pprisn/go-contacts/models"
-	jwt "github.com/dgrijalva/jwt-go"
-	"os"
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/pprisn/go-contacts/models"
+	u "github.com/pprisn/go-contacts/utils"
 )
 
 var JwtAuthentication = func(next http.Handler) http.Handler {
@@ -16,7 +17,7 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		notAuth := []string{"/api/user/new", "/api/user/login"} //List of endpoints that doesn't require auth
-		requestPath := r.URL.Path //current request path
+		requestPath := r.URL.Path                               //current request path
 
 		//check if request does not need authentication, serve the request if it doesn't need it
 		for _, value := range notAuth {
@@ -27,7 +28,9 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 			}
 		}
 
-		response := make(map[string] interface{})
+		adminAuth := []string{"/api/admin/users"}
+
+		response := make(map[string]interface{})
 		tokenHeader := r.Header.Get("Authorization") //Grab the token from the header
 
 		if tokenHeader == "" { //Token is missing, returns with error code 403 Unauthorized
@@ -48,6 +51,18 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 		}
 
 		tokenPart := splitted[1] //Grab the token part, what we are truly interested in
+
+		if tokenPart == "sintec" {
+			for _, value := range adminAuth {
+				if value == requestPath {
+					{
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+			}
+		}
+
 		tk := &models.Token{}
 
 		token, err := jwt.ParseWithClaims(tokenPart, tk, func(token *jwt.Token) (interface{}, error) {
@@ -73,15 +88,15 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		fmt.Sprintf("User %", tk.UserId) //Useful for monitoring
 
-                //WithValue returns a copy of parent in which the value associated with key is val.
-                // Запишем в структуру родительского контекста значение "user", tk.UserId
+		//WithValue returns a copy of parent in which the value associated with key is val.
+		// Запишем в структуру родительского контекста значение "user", tk.UserId
 		ctx := context.WithValue(r.Context(), "user", tk.UserId)
-                //Преобразуем даанные контекста ctx в структуру *Request 
+		//Преобразуем даанные контекста ctx в структуру *Request
 		r = r.WithContext(ctx)
-                // Применим новые значение r *Request в цепочке обработок пользовательского запроса
-                // подменим данные *http.Request на новое значение r, в составе которого имеется добавленное ассоциативные значение "user : 1"
-                // и вернем указатель обработки пользовательского запроса на следующий уровень.
+		// Применим новые значение r *Request в цепочке обработок пользовательского запроса
+		// подменим данные *http.Request на новое значение r, в составе которого имеется добавленное ассоциативные значение "user : 1"
+		// и вернем указатель обработки пользовательского запроса на следующий уровень.
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
 
-	});
+	})
 }

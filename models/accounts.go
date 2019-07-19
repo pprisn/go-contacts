@@ -1,13 +1,14 @@
 package models
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	u "github.com/pprisn/go-contacts/utils"
-	"strings"
-	"github.com/jinzhu/gorm"
 	"os"
+	"strings"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/gorm"
+	u "github.com/pprisn/go-contacts/utils"
 	"golang.org/x/crypto/bcrypt"
-        "time"
 )
 
 /*
@@ -21,13 +22,13 @@ type Token struct {
 //a struct to rep user account
 type Account struct {
 	gorm.Model
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
-	Token string `json:"token";sql:"-"`
+	Token    string `json:"token";sql:"-"`
 }
 
 //Validate incoming user details...
-func (account *Account) Validate() (map[string] interface{}, bool) {
+func (account *Account) Validate() (map[string]interface{}, bool) {
 
 	if !strings.Contains(account.Email, "@") {
 		return u.Message(false, "Email address is required"), false
@@ -52,7 +53,7 @@ func (account *Account) Validate() (map[string] interface{}, bool) {
 	return u.Message(false, "Requirement passed"), true
 }
 
-func (account *Account) Create() (map[string] interface{}) {
+func (account *Account) Create() map[string]interface{} {
 
 	if resp, ok := account.Validate(); !ok {
 		return resp
@@ -68,14 +69,14 @@ func (account *Account) Create() (map[string] interface{}) {
 	}
 
 	//Create new JWT token for the newly registered account
-        //tk := &Token{UserId: account.ID}
-        //Добавим временное ограничение действия токена
+	//tk := &Token{UserId: account.ID}
+	//Добавим временное ограничение действия токена
 	tk := &Token{
-              UserId: account.ID, 
-              StandardClaims: jwt.StandardClaims{
-                  ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer:  "test",
-           },
-        }
+		UserId: account.ID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer: "test",
+		},
+	}
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
@@ -88,7 +89,7 @@ func (account *Account) Create() (map[string] interface{}) {
 	return response
 }
 
-func Login(email, password string) (map[string]interface{}) {
+func Login(email, password string) map[string]interface{} {
 
 	account := &Account{}
 	err := GetDB().Table("accounts").Where("email = ?", email).First(account).Error
@@ -107,14 +108,14 @@ func Login(email, password string) (map[string]interface{}) {
 	account.Password = ""
 
 	//Create JWT token
-        //tk := &Token{UserId: account.ID}
-        //Добавим временное ограничение действия токена
+	//tk := &Token{UserId: account.ID}
+	//Добавим временное ограничение действия токена
 	tk := &Token{
-              UserId: account.ID, 
-              StandardClaims: jwt.StandardClaims{
-                  ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer:  "test",
-           },
-        }
+		UserId: account.ID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer: "test",
+		},
+	}
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
@@ -126,7 +127,6 @@ func Login(email, password string) (map[string]interface{}) {
 }
 
 func GetUser(u uint) *Account {
-
 	acc := &Account{}
 	GetDB().Table("accounts").Where("id = ?", u).First(acc)
 	if acc.Email == "" { //User not found!
@@ -135,4 +135,13 @@ func GetUser(u uint) *Account {
 
 	acc.Password = ""
 	return acc
+}
+
+func GetUsers() []*Account {
+	accs := make([]*Account, 0)
+	err := GetDB().Table("accounts").Find(&accs).Error
+	if err != nil { //Accounts not found!
+		return nil
+	}
+	return accs
 }
