@@ -16,6 +16,7 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		adminAuth := []string{"/api/admin/users"}
 		notAuth := []string{"/api/user/new", "/api/user/login"} //List of endpoints that doesn't require auth
 		requestPath := r.URL.Path                               //current request path
 
@@ -27,8 +28,6 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 				return
 			}
 		}
-
-		adminAuth := []string{"/api/admin/users"}
 
 		response := make(map[string]interface{})
 		tokenHeader := r.Header.Get("Authorization") //Grab the token from the header
@@ -52,7 +51,7 @@ var JwtAuthentication = func(next http.Handler) http.Handler {
 
 		tokenPart := splitted[1] //Grab the token part, what we are truly interested in
 
-		if tokenPart == "sintec" {
+		if tokenPart == os.Getenv("token_admin") {
 			for _, value := range adminAuth {
 				if value == requestPath {
 					{
