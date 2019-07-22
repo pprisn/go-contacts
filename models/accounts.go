@@ -63,7 +63,7 @@ func (account *Account) Create() map[string]interface{} {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 	account.CodValid = u.GenCodeValid(6) //Creating a new code value
-	u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\n"+account.CodValid)
+	u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\nUse it the next time you log in\n"+account.CodValid)
 	GetDB().Create(account)
 
 	if account.ID <= 0 {
@@ -83,10 +83,8 @@ func (account *Account) Create() map[string]interface{} {
 	//	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	//	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	//	account.Token = tokenString
-	account.Token = ""
-
+	account.Token = ""    //delete Token
 	account.Password = "" //delete password
-
 	response := u.Message(true, "Account has been created, Please confirm registration by sending a verification code at the next login.")
 	response["account"] = account
 	return response
@@ -113,19 +111,14 @@ func Login(email, password string, codevalid string) map[string]interface{} {
 
 	if account.CodValid != codevalid {
 		account.CodValid = u.GenCodeValid(6) //Creating a new code value
-		//GetDB().Model(account).Where("email = ?", email).Update("codvalid", account.CodValid)
+		//Обновим значение CodValid в БД
 		GetDB().Model(account).Where("email = ?", email).Updates(Account{CodValid: account.CodValid})
-		//GetDB().Model(account).Select("codvalid").Updates(map[string]interface{}{"codvalid": account.CodValid})
-		//        dbConn.Where("id = ?", currentId).Save(&act)
-		//        GetDB().Model(account).Where("email = ?", email).Save()
-		//GetDB().Model(account).Commit()
 		u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\nUse it the next time you log in\n"+account.CodValid)
 		return u.Message(false, "A verification code has been sent to you email, use it the next time you log in.")
 	}
 
 	//Worked! Logged In
 	account.CodValid = ""
-
 	//Create JWT token
 	//tk := &Token{UserId: account.ID}
 	//Добавим временное ограничение действия токена
