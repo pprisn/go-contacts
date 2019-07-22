@@ -25,6 +25,7 @@ type Account struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Token    string `json:"token";sql:"-"`
+	CodValid string `json:"codvalid"`
 }
 
 //Validate incoming user details...
@@ -61,7 +62,8 @@ func (account *Account) Create() map[string]interface{} {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
-
+	account.CodValid = u.GenCodeValid(6) //Creating a new code value
+	u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\n1234")
 	GetDB().Create(account)
 
 	if account.ID <= 0 {
@@ -71,25 +73,26 @@ func (account *Account) Create() map[string]interface{} {
 	//Create new JWT token for the newly registered account
 	//tk := &Token{UserId: account.ID}
 	//Добавим временное ограничение действия токена
-	tk := &Token{
-		UserId: account.ID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer: "test",
-		},
-	}
+	//tk := &Token{
+	//		UserId: account.ID,
+	//		StandardClaims: jwt.StandardClaims{
+	//			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer: "test",
+	//		},
+	//	}
 
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
-	account.Token = tokenString
+	//	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	//	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	//	account.Token = tokenString
+	account.Token = ""
 
 	account.Password = "" //delete password
 
-	response := u.Message(true, "Account has been created")
+	response := u.Message(true, "Account has been created, Please confirm registration by sending a verification code at the next login.")
 	response["account"] = account
 	return response
 }
 
-func Login(email, password string) map[string]interface{} {
+func Login(email, password string, codevalid string) map[string]interface{} {
 
 	account := &Account{}
 	err := GetDB().Table("accounts").Where("email = ?", email).First(account).Error
@@ -104,8 +107,17 @@ func Login(email, password string) map[string]interface{} {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
 		return u.Message(false, "Invalid login credentials. Please try again")
 	}
+
 	//Worked! Logged In
 	account.Password = ""
+	if account.CodValid != codevalid {
+		account.CodValid = u.GenCodeValid(6) //Creating a new code value
+		u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\nUse it the next time you log in\n"+account.CodValid)
+		return u.Message(false, "A verification code has been sent to you, use it the next time you log in.")
+	}
+
+	//Worked! Logged In
+	account.CodValid = ""
 
 	//Create JWT token
 	//tk := &Token{UserId: account.ID}

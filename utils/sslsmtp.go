@@ -5,25 +5,30 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/mail"
+
+	//"net/mail"
 	"net/smtp"
+	"os"
 )
 
-// SSL/TLS Email Example
-func SendSmtp(From []string, To []string, Subj string, Body string) {
-	//from := mail.Address{"", "username@example.tld"}
+//func SendSmtp(from []string, to []string, subj string, body string) {
+//Для отправки служебных сообщений пользователям системы
+//Connect to the smtp.yandex.ru:465
+//SSL/TLS Email Example
+//Parameters
+//to := mail.Address{"", "username@anotherexample.tld"}
+//subj := "This is the email subject"
+//body := "This is an example body.\n With two lines."
+func SendSmtp(to string, subj string, body string) {
+	//from := mail.Address{"", os.Getenv("UserSmtp")}
 	//to := mail.Address{"", "username@anotherexample.tld"}
 	//subj := "This is the email subject"
 	//body := "This is an example body.\n With two lines."
-	from := From
-	to := To
-	subj := Subj
-	body := Body
 
 	// Setup headers
 	headers := make(map[string]string)
-	headers["From"] = from.String()
-	headers["To"] = to.String()
+	headers["From"] = os.Getenv("UserSmtp")
+	headers["To"] = to
 	headers["Subject"] = subj
 
 	// Setup message
@@ -32,21 +37,15 @@ func SendSmtp(From []string, To []string, Subj string, Body string) {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	message += "\r\n" + body
-
 	// Connect to the SMTP Server
-
 	servername := "smtp.yandex.ru:465"
-
 	host, _, _ := net.SplitHostPort(servername)
-
 	auth := smtp.PlainAuth("", os.Getenv("UserSmtp"), os.Getenv("PassSmtp"), host)
-
 	// TLS config
 	tlsconfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         host,
 	}
-
 	// Here is the key, you need to call tls.Dial instead of smtp.Dial
 	// for smtp servers running on 465 that require an ssl connection
 	// from the very beginning (no starttls)
@@ -54,23 +53,20 @@ func SendSmtp(From []string, To []string, Subj string, Body string) {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	c, err := smtp.NewClient(conn, host)
 	if err != nil {
 		log.Panic(err)
 	}
-
 	// Auth
 	if err = c.Auth(auth); err != nil {
 		log.Panic(err)
 	}
-
 	// To && From
-	if err = c.Mail(from.Address); err != nil {
+	if err = c.Mail(os.Getenv("UserSmtp")); err != nil { //from.Address
 		log.Panic(err)
 	}
 
-	if err = c.Rcpt(to.Address); err != nil {
+	if err = c.Rcpt(to); err != nil { //to.Address
 		log.Panic(err)
 	}
 
@@ -84,7 +80,6 @@ func SendSmtp(From []string, To []string, Subj string, Body string) {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	err = w.Close()
 	if err != nil {
 		log.Panic(err)
