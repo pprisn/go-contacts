@@ -54,6 +54,30 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	return u.Message(false, "Requirement passed"), true
 }
 
+//Validate incoming user details...
+func (account *Account) ValidateUpdate() (map[string]interface{}, bool) {
+
+	if !strings.Contains(account.Email, "@") {
+		return u.Message(false, "Email address is required"), false
+	}
+
+	if len(account.Password) < 6 {
+		return u.Message(false, "Password is required"), false
+	}
+
+	//Email must be unique
+	temp := &Account{}
+	//check for errors and duplicate emails
+	err := GetDB().Table("accounts").Where("email = ?", account.Email).First(temp).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return u.Message(false, "Connection error. Please retry"), false
+	}
+	if temp.Email == "" {
+		return u.Message(false, "Email address not found in database."), false
+	}
+	return u.Message(false, "Requirement passed"), true
+}
+
 func (account *Account) Create() map[string]interface{} {
 
 	if resp, ok := account.Validate(); !ok {
