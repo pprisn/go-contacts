@@ -20,7 +20,7 @@ func main() {
 	router.HandleFunc("/api/contacts/new", controllers.CreateContact).Methods("POST")
 	router.HandleFunc("/api/me/contacts", controllers.GetContactsFor).Methods("GET") //  user/2/contacts
 	router.HandleFunc("/api/admin/users", controllers.GetUsers).Methods("GET")
-	router.HandleFunc("/api/admin/update/users", controllers.UpdateUsers).Methods("POST") //служебная функция для административных изменений данных списка учетных записей
+	router.HandleFunc("/api/admin/update/users", controllers.UpdateAccount).Methods("POST") //служебная функция для административных изменений данных списка учетных записей
 
 	//Добавим требование запуска проверки middleware для объектов обработки маршрутов !
 	router.Use(app.JwtAuthentication) //attach JWT auth middleware
