@@ -109,7 +109,7 @@ func Login(email, password string, codevalid string) map[string]interface{} {
 	//Worked! Logged In
 	account.Password = ""
 
-	if account.CodValid != codevalid {
+	if account.CodValid != codevalid || account.CodValid == "" {
 		account.CodValid = u.GenCodeValid(6) //Creating a new code value
 		//Обновим значение CodValid в БД
 		GetDB().Model(account).Where("email = ?", email).Updates(Account{CodValid: account.CodValid})
