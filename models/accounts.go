@@ -75,7 +75,7 @@ func (account *Account) ValidateUpdate() (map[string]interface{}, bool) {
 	if temp.Email == "" {
 		return u.Message(false, "Email address not found in database."), false
 	}
-	return u.Message(false, "Requirement passed"), true
+	return u.Message(true, "Requirement passed"), true
 }
 
 func (account *Account) Create() map[string]interface{} {
@@ -192,7 +192,7 @@ func Update(email, password, username, userrole, codevalid string) map[string]in
 		return u.Message(false, "Connection error. Please retry")
 	}
 
-	if resp, ok := account.Validate(); !ok {
+	if resp, ok := account.ValidateUpdate(); !ok {
 		return resp
 	}
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
