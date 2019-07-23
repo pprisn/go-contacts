@@ -25,7 +25,6 @@ func SendSmtp(to_ string, subj string, body string) {
 	to := mail.Address{"", to_}
 	//subj := "This is the email subject"
 	//body := "This is an example body.\n With two lines."
-
 	// Setup headers
 	headers := make(map[string]string)
 	headers["From"] = from.String()
@@ -41,7 +40,6 @@ func SendSmtp(to_ string, subj string, body string) {
 
 	// Connect to the SMTP Server
 	servername := "smtp.yandex.ru:465"
-
 	host, _, _ := net.SplitHostPort(servername)
 
 	auth := smtp.PlainAuth("", os.Getenv("UserSmtp"), os.Getenv("PassSmtp"), host)

@@ -39,3 +39,21 @@ var GetUsers = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 
 }
+
+//Административная функция для внесения изменений в учетные данные пользователя
+var UpdateAccount = func(w http.ResponseWriter, r *http.Request) {
+	//Заполним новыми значениями поля для изменения учетных данных
+	account := &models.Account{}
+	err := json.NewDecoder(r.Body).Decode(account) //decode the request body into struct and failed if any error occur
+	if err != nil {
+		u.Respond(w, u.Message(false, "Invalid request"))
+		return
+	}
+	resp := models.Update(
+		account.Email,
+		account.Password,
+		account.UserName,
+		account.UserRole,
+		account.CodValid) //Update account
+	u.Respond(w, resp)
+}

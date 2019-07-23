@@ -26,6 +26,8 @@ type Account struct {
 	Password string `json:"password"`
 	Token    string `json:"token";sql:"-"`
 	CodValid string `json:"codvalid"`
+	UserName string `json:"username"`
+	UserRole string `json:"userrole"`
 }
 
 //Validate incoming user details...
@@ -41,7 +43,6 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 
 	//Email must be unique
 	temp := &Account{}
-
 	//check for errors and duplicate emails
 	err := GetDB().Table("accounts").Where("email = ?", account.Email).First(temp).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -50,7 +51,6 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	if temp.Email != "" {
 		return u.Message(false, "Email address already in use by another user."), false
 	}
-
 	return u.Message(false, "Requirement passed"), true
 }
 
@@ -128,7 +128,6 @@ func Login(email, password string, codevalid string) map[string]interface{} {
 			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(), Issuer: "test",
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString //Store the token in the response
@@ -156,4 +155,37 @@ func GetUsers() []*Account {
 		return nil
 	}
 	return accs
+}
+
+//Функция func Update()обновления данных искомой записи по email в таблице account, кроме полей ID, email,token
+func Update(email, password, username, userrole, codevalid string) map[string]interface{} {
+	account := &Account{}
+	err := GetDB().Table("accounts").Where("email = ?", email).First(account).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return u.Message(false, "Email address not found")
+		}
+		return u.Message(false, "Connection error. Please retry")
+	}
+
+	if resp, ok := account.Validate(); !ok {
+		return resp
+	}
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
+	account.Password = string(hashedPassword)
+	account.CodValid = u.GenCodeValid(6) //Creating a new code value
+	u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\nUse it the next time you log in\n"+account.CodValid)
+	account.UserName = username
+	account.UserRole = userrole
+
+	GetDB().Model(account).Where("email = ?", email).Updates(Account{Password: account.Password,
+		UserName: account.UserName,
+		UserRole: account.UserRole,
+		CodValid: account.CodValid})
+
+	account.Token = ""    //delete Token
+	account.Password = "" //delete password
+	response := u.Message(true, "Account has been updated, Please confirm registration by sending a verification code at the next login.")
+	response["account"] = account
+	return response
 }
