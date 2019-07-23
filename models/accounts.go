@@ -195,7 +195,7 @@ func Update(email, password, username, userrole, codevalid string) map[string]in
 	if resp, ok := account.ValidateUpdate(); !ok {
 		return resp
 	}
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 	account.CodValid = u.GenCodeValid(6) //Creating a new code value
 	u.SendSmtp(account.Email, "Temporary confirmation code from API", "This is a confirmation code from API.\nUse it the next time you log in\n"+account.CodValid)
